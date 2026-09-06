@@ -1,0 +1,8 @@
+langgraph
+langchain
+langchain-openai
+PyGithub
+jira
+python-dotenv
+pytest
+
