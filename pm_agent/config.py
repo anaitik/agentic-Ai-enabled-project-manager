@@ -25,6 +25,9 @@ class Settings:
     github_token: str
     jira_api_token: str
     jira_base_url: str
+    langchain_tracing_v2: str | None
+    langchain_api_key: str | None
+    langchain_project: str | None
 
 
 def load_settings() -> Settings:
@@ -46,4 +49,16 @@ def load_settings() -> Settings:
         github_token=os.environ["GITHUB_TOKEN"],
         jira_api_token=os.environ["JIRA_API_TOKEN"],
         jira_base_url=os.environ["JIRA_BASE_URL"],
+        langchain_tracing_v2=os.getenv("LANGCHAIN_TRACING_V2"),
+        langchain_api_key=os.getenv("LANGCHAIN_API_KEY"),
+        langchain_project=os.getenv("LANGCHAIN_PROJECT"),
     )
+
+
+def configure_langsmith_tracing() -> None:
+    """Load optional LangSmith tracing env vars without requiring them."""
+
+    load_dotenv()
+
+    if os.getenv("LANGCHAIN_API_KEY") and not os.getenv("LANGCHAIN_TRACING_V2"):
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
