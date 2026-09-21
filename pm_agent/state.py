@@ -13,6 +13,6 @@ class PMAgentState(TypedDict):
     scope_approved: bool
     github_repo_url: str | None
     jira_project_key: str | None
+    status_map: dict
     stories: list[dict]
     phase: Literal["scoping", "provisioning", "story_gen", "tracking"]
-

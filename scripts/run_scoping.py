@@ -15,6 +15,7 @@ def _initial_state() -> PMAgentState:
         "scope_approved": False,
         "github_repo_url": None,
         "jira_project_key": None,
+        "status_map": {},
         "stories": [],
         "phase": "scoping",
     }
@@ -46,4 +47,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

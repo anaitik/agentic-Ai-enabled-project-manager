@@ -20,3 +20,19 @@ class GitHubRateLimitedError(GitHubToolError):
 class GitHubTransientNetworkError(GitHubToolError):
     """Raised when transient GitHub network errors persist after retries."""
 
+
+class JiraToolError(RuntimeError):
+    """Base exception for Jira tool failures."""
+
+
+class JiraProjectProvisioningError(JiraToolError):
+    """Raised when Jira project provisioning fails."""
+
+
+class JiraWorkflowInspectionError(JiraToolError):
+    """Raised when Jira workflow transitions cannot be inspected."""
+
+
+class StatusMappingError(JiraToolError):
+    """Raised when internal statuses cannot be mapped to Jira transitions."""
+

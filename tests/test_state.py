@@ -12,6 +12,7 @@ def test_pm_agent_state_accepts_dummy_values():
         "scope_approved": False,
         "github_repo_url": None,
         "jira_project_key": None,
+        "status_map": {},
         "stories": [
             {
                 "internal_id": "story-1",
@@ -32,4 +33,3 @@ def test_pm_agent_state_accepts_dummy_values():
     assert isinstance(state["conversation_history"], list)
     assert isinstance(state["proposed_features"], list)
     assert isinstance(state["stories"], list)
-

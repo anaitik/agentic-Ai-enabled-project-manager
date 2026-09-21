@@ -29,6 +29,7 @@ def _state() -> PMAgentState:
         "scope_approved": False,
         "github_repo_url": None,
         "jira_project_key": None,
+        "status_map": {},
         "stories": [],
         "phase": "scoping",
     }

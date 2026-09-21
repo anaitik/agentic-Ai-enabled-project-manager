@@ -2,7 +2,11 @@
 
 import json
 
-from pm_agent.nodes.provisioning import provisioning_node, slugify_repo_name
+from pm_agent.nodes.provisioning import (
+    provisioning_node,
+    slugify_jira_project_key,
+    slugify_repo_name,
+)
 from pm_agent.state import PMAgentState
 
 
@@ -15,6 +19,7 @@ def _initial_state(project_id: str) -> PMAgentState:
         "scope_approved": True,
         "github_repo_url": None,
         "jira_project_key": None,
+        "status_map": {},
         "stories": [],
         "phase": "provisioning",
     }
@@ -27,7 +32,9 @@ def main() -> None:
         return
 
     repo_name = slugify_repo_name(project_id)
+    jira_key = slugify_jira_project_key(project_id)
     print(f"Creating private GitHub repo: {repo_name}")
+    print(f"Creating Jira project: {jira_key}")
 
     state = provisioning_node(_initial_state(project_id))
     print(json.dumps(state, indent=2))
@@ -35,4 +42,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
