@@ -11,6 +11,12 @@ from pm_agent.nodes import (
 from pm_agent.state import PMAgentState
 
 
+def _route_after_scoping(state: PMAgentState) -> str:
+    if state["scope_approved"]:
+        return "provisioning"
+    return "scoping"
+
+
 def build_graph():
     """Build and compile the project manager agent graph."""
 
@@ -22,7 +28,14 @@ def build_graph():
     graph.add_node("tracking", tracking_node)
 
     graph.add_edge(START, "scoping")
-    graph.add_edge("scoping", "provisioning")
+    graph.add_conditional_edges(
+        "scoping",
+        _route_after_scoping,
+        {
+            "scoping": "scoping",
+            "provisioning": "provisioning",
+        },
+    )
     graph.add_edge("provisioning", "story_gen")
     graph.add_edge("story_gen", "tracking")
     graph.add_edge("tracking", END)
@@ -31,4 +44,3 @@ def build_graph():
 
 
 app = build_graph()
-
