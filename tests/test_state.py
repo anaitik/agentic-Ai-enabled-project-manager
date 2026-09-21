@@ -25,6 +25,7 @@ def test_pm_agent_state_accepts_dummy_values():
                 "confidence": 0.95,
             }
         ],
+        "needs_human_review": False,
         "phase": "scoping",
     }
 

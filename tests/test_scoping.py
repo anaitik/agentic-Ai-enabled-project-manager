@@ -31,6 +31,7 @@ def _state() -> PMAgentState:
         "jira_project_key": None,
         "status_map": {},
         "stories": [],
+        "needs_human_review": False,
         "phase": "scoping",
     }
 

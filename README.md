@@ -62,6 +62,12 @@ Run provisioning against real GitHub/Jira accounts:
 python scripts/run_provisioning.py
 ```
 
+Run story generation against a hardcoded sample feature list:
+
+```bash
+python scripts/run_story_gen.py
+```
+
 Inspect available Jira workflow transitions for a project:
 
 ```bash
