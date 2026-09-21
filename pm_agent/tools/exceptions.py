@@ -33,6 +33,13 @@ class JiraWorkflowInspectionError(JiraToolError):
     """Raised when Jira workflow transitions cannot be inspected."""
 
 
+class JiraIssueCreationError(JiraToolError):
+    """Raised when Jira issue creation fails."""
+
+
+class JiraRateLimitedError(JiraToolError):
+    """Raised when Jira rejects a request because of rate limiting."""
+
+
 class StatusMappingError(JiraToolError):
     """Raised when internal statuses cannot be mapped to Jira transitions."""
-

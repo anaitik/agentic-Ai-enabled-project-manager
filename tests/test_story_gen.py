@@ -58,6 +58,15 @@ def test_story_gen_retries_invalid_stories_and_succeeds(monkeypatch):
         ]
     )
     monkeypatch.setattr(story_gen_module, "get_llm", lambda: fake_llm)
+    monkeypatch.setattr(story_gen_module, "request_approval", lambda stories: True)
+    monkeypatch.setattr(
+        story_gen_module,
+        "create_issues_batch",
+        lambda project_key, stories: (
+            [{**story, "jira_issue_key": "PROJ-1"} for story in stories],
+            [],
+        ),
+    )
 
     result = story_gen_node(_state())
 
@@ -66,6 +75,7 @@ def test_story_gen_retries_invalid_stories_and_succeeds(monkeypatch):
     assert result["needs_human_review"] is False
     assert result["story_gen_attempts"] == 2
     assert result["stories"][0]["internal_id"] == "story-001"
+    assert result["stories"][0]["jira_issue_key"] == "PROJ-1"
 
 
 def test_story_gen_sets_human_review_after_three_failures(monkeypatch):

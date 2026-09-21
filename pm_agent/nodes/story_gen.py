@@ -5,6 +5,8 @@ import json
 from pm_agent.llm import get_llm
 from pm_agent.prompts.story_gen_prompt import STORY_GEN_SYSTEM_PROMPT
 from pm_agent.state import PMAgentState
+from pm_agent.tools.approval import request_approval
+from pm_agent.tools.jira_tools import create_issues_batch
 from pm_agent.validation.story_validator import validate_stories
 
 
@@ -74,12 +76,32 @@ def story_gen_node(state: PMAgentState) -> PMAgentState:
 
         is_valid, validation_errors = validate_stories(stories)
         if is_valid:
+            assert all(
+                "jira_issue_key" not in story for story in stories
+            ), "jira_issue_key must come only from Jira API responses, never from the LLM."
+
+            if not request_approval(stories):
+                return {
+                    **state,
+                    "stories": stories,
+                    "needs_human_review": True,
+                    "phase": "story_gen",
+                    "story_gen_attempts": attempt,
+                    "jira_push_failures": [],
+                }
+
+            created_stories, failures = create_issues_batch(
+                project_key=state["jira_project_key"],
+                stories=stories,
+            )
+
             return {
                 **state,
-                "stories": stories,
-                "needs_human_review": False,
+                "stories": created_stories,
+                "needs_human_review": bool(failures),
                 "phase": "story_gen",
                 "story_gen_attempts": attempt,
+                "jira_push_failures": failures,
             }
 
         errors = validation_errors

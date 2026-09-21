@@ -1,14 +1,20 @@
 """Jira tool functions."""
 
 import os
+import time
 
 from jira import JIRA, JIRAError
 
 from pm_agent.config import load_settings
 from pm_agent.tools.exceptions import (
+    JiraIssueCreationError,
     JiraProjectProvisioningError,
+    JiraRateLimitedError,
     JiraWorkflowInspectionError,
 )
+
+
+MAX_RATE_LIMIT_RETRIES = 3
 
 
 def _get_jira_client() -> JIRA:
@@ -43,6 +49,100 @@ def create_project(key: str, name: str) -> str:
         return str(project.get("key", key))
 
     return str(getattr(project, "key", key))
+
+
+def create_issue(
+    project_key: str,
+    summary: str,
+    description: str,
+    issue_type: str = "Story",
+    labels: list[str] | None = None,
+) -> str:
+    """Create a Jira issue and return the Jira-generated issue key."""
+
+    jira = _get_jira_client()
+
+    try:
+        issue = jira.create_issue(
+            project=project_key,
+            summary=summary,
+            description=description,
+            issuetype={"name": issue_type},
+            labels=labels or [],
+        )
+    except JIRAError as exc:
+        if _jira_status_code(exc) == 429:
+            raise JiraRateLimitedError("Jira rate limit reached while creating issue.") from exc
+        raise JiraIssueCreationError(
+            f"Failed to create Jira issue '{summary}' in project '{project_key}'."
+        ) from exc
+
+    return str(getattr(issue, "key"))
+
+
+def create_issues_batch(
+    project_key: str,
+    stories: list[dict],
+    delay_seconds: float = 0.5,
+) -> tuple[list[dict], list[dict]]:
+    """Create Jira issues sequentially and return successes plus failures."""
+
+    created_stories = []
+    failures = []
+
+    for story in stories:
+        try:
+            jira_issue_key = _create_issue_with_rate_limit_retry(
+                project_key=project_key,
+                story=story,
+            )
+        except Exception as exc:
+            failures.append(
+                {
+                    "story": story,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                }
+            )
+        else:
+            created_stories.append({**story, "jira_issue_key": jira_issue_key})
+
+        time.sleep(delay_seconds)
+
+    return created_stories, failures
+
+
+def _create_issue_with_rate_limit_retry(project_key: str, story: dict) -> str:
+    delay = 1.0
+
+    for attempt in range(1, MAX_RATE_LIMIT_RETRIES + 1):
+        try:
+            return create_issue(
+                project_key=project_key,
+                summary=story["title"],
+                description=_format_story_description(story),
+                issue_type="Story",
+                labels=["pm-agent"],
+            )
+        except JiraRateLimitedError:
+            if attempt == MAX_RATE_LIMIT_RETRIES:
+                raise
+            time.sleep(delay)
+            delay *= 2
+
+    raise JiraRateLimitedError("Jira rate limit retry loop exited unexpectedly.")
+
+
+def _format_story_description(story: dict) -> str:
+    criteria = story.get("acceptance_criteria", [])
+    criteria_text = "\n".join(f"- {item}" for item in criteria)
+    return (
+        f"{story['description']}\n\n"
+        f"Acceptance criteria:\n{criteria_text}\n\n"
+        f"Story points: {story['story_points']}\n"
+        f"Priority: {story['priority']}\n"
+        f"Internal ID: {story['internal_id']}"
+    )
 
 
 def get_workflow_transitions(project_key: str) -> dict:
@@ -101,3 +201,12 @@ def _transition_to_status(transition: dict) -> str | None:
     name = getattr(to_status, "name", None)
     return str(name) if name is not None else None
 
+
+def _jira_status_code(exc: JIRAError) -> int | None:
+    status_code = getattr(exc, "status_code", None)
+    if status_code is not None:
+        return int(status_code)
+
+    response = getattr(exc, "response", None)
+    response_status = getattr(response, "status_code", None)
+    return int(response_status) if response_status is not None else None
