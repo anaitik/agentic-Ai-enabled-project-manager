@@ -112,6 +112,23 @@ def create_issues_batch(
     return created_stories, failures
 
 
+def transition_issue(issue_key: str, transition_id: str) -> None:
+    """Move a Jira issue using a project-specific transition ID."""
+
+    jira = _get_jira_client()
+
+    try:
+        jira.transition_issue(issue_key, transition_id)
+    except JIRAError as exc:
+        if _jira_status_code(exc) == 429:
+            raise JiraRateLimitedError(
+                f"Jira rate limit reached while transitioning issue '{issue_key}'."
+            ) from exc
+        raise JiraIssueCreationError(
+            f"Failed to transition Jira issue '{issue_key}' with transition '{transition_id}'."
+        ) from exc
+
+
 def _create_issue_with_rate_limit_retry(project_key: str, story: dict) -> str:
     delay = 1.0
 

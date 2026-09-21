@@ -15,5 +15,6 @@ class PMAgentState(TypedDict):
     jira_project_key: str | None
     status_map: dict
     stories: list[dict]
+    story_embeddings: dict
     needs_human_review: bool
     phase: Literal["scoping", "provisioning", "story_gen", "tracking"]

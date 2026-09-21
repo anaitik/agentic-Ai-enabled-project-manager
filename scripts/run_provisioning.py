@@ -21,6 +21,7 @@ def _initial_state(project_id: str) -> PMAgentState:
         "jira_project_key": None,
         "status_map": {},
         "stories": [],
+        "story_embeddings": {},
         "needs_human_review": False,
         "phase": "provisioning",
     }

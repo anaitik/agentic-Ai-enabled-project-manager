@@ -68,6 +68,14 @@ Run story generation against a hardcoded sample feature list:
 python scripts/run_story_gen.py
 ```
 
+Run chat-based developer tracking:
+
+```bash
+python scripts/run_tracking.py
+```
+
+Tracking uses the local `sentence-transformers/all-MiniLM-L6-v2` embedding model for story matching. Install dependencies with `pip install -r requirements.txt` before running it.
+
 Inspect available Jira workflow transitions for a project:
 
 ```bash
